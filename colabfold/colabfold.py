@@ -55,9 +55,15 @@ def to(x,device="cpu"):
   return jax.tree_util.tree_map(lambda y:jax.device_put(y,d), x)
 
 def clear_mem(device="gpu"):
-  '''remove all data from device'''
-  backend = jax.lib.xla_bridge.get_backend(device)
-  for buf in backend.live_buffers(): buf.delete()
+  '''remove all data from device (JAX >=0.10 / Blackwell sm_120 removed jax.lib.xla_bridge)'''
+  try:
+    for arr in jax.live_arrays(device): arr.delete()
+  except Exception:
+    try:
+      backend = jax.extend.backend.get_backend(device)
+      for buf in backend.live_buffers(): buf.delete()
+    except Exception:
+      pass
     
 ##########################################
 # call mmseqs2
